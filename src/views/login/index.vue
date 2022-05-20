@@ -6,15 +6,15 @@
         <h3 class="title">Login Form</h3>
       </div>
 
-      <el-form-item prop="username">
+      <el-form-item prop="mobile">
         <span class="svg-container">
           <svg-icon icon-class="user" />
         </span>
         <el-input
-          ref="username"
-          v-model="loginForm.username"
-          placeholder="Username"
-          name="username"
+          ref="mobile"
+          v-model="loginForm.mobile"
+          placeholder="mobile"
+          name="mobile"
           type="text"
           tabindex="1"
           auto-complete="on"
@@ -43,43 +43,33 @@
 
       <el-button :loading="loading" type="primary" style="width:100%;margin-bottom:30px;" @click.native.prevent="handleLogin">Login</el-button>
 
-      <div class="tips">
-        <span style="margin-right:20px;">username: admin</span>
-        <span> password: any</span>
-      </div>
-
     </el-form>
   </div>
 </template>
 
 <script>
-import { validUsername } from '@/utils/validate'
+import { validMobile } from '@/utils/validate'
+import { mapActions } from 'vuex'
 
 export default {
   name: 'Login',
   data() {
-    const validateUsername = (rule, value, callback) => {
-      if (!validUsername(value)) {
-        callback(new Error('Please enter the correct user name'))
-      } else {
-        callback()
-      }
-    }
-    const validatePassword = (rule, value, callback) => {
-      if (value.length < 6) {
-        callback(new Error('The password can not be less than 6 digits'))
-      } else {
-        callback()
-      }
+    // 校验手机号的自定义规则
+    const validateMobile = (rule, value, callback) => {
+      validMobile(value) ? callback() : callback(new Error('The phone number format is incorrect'))
     }
     return {
       loginForm: {
-        username: 'admin',
-        password: '111111'
+        mobile: '13800000002',
+        password: '123456'
       },
       loginRules: {
-        username: [{ required: true, trigger: 'blur', validator: validateUsername }],
-        password: [{ required: true, trigger: 'blur', validator: validatePassword }]
+        mobile: [
+          { required: true, trigger: 'blur', message: 'Mobile phone number cannot be empty' },
+          { validator: validateMobile, trigger: 'blur' }],
+        password: [
+          { required: true, trigger: 'blur', message: 'The password cannot be empty' },
+          { min: 6, max: 16, message: 'The password contains 6 to 16 characters', trigger: 'blur' }]
       },
       loading: false,
       passwordType: 'password',
@@ -95,6 +85,7 @@ export default {
     }
   },
   methods: {
+    ...mapActions(['user/login']), // 加锁的模块需要加路径
     showPwd() {
       if (this.passwordType === 'password') {
         this.passwordType = ''
@@ -106,18 +97,22 @@ export default {
       })
     },
     handleLogin() {
-      this.$refs.loginForm.validate(valid => {
-        if (valid) {
-          this.loading = true
-          this.$store.dispatch('user/login', this.loginForm).then(() => {
-            this.$router.push({ path: this.redirect || '/' })
+      this.$refs.loginForm.validate(async isOk => {
+        if (isOk) {
+          // 校验成功
+          try {
+            this.loading = true
+            await this['user/login'](this.loginForm)
+            // 强行等待上行代码的成功 成功的话再执行下面的操作
+            // await下面的代码 都是成功执行的代码
+            this.$router.push('/')
+          } catch (error) {
+            // 响应拦截器已经处理 失败进入这里 success = false
+            console.log(error)
+          } finally {
+            //  不论执行try 还是catch  都去关闭loading
             this.loading = false
-          }).catch(() => {
-            this.loading = false
-          })
-        } else {
-          console.log('error submit!!')
-          return false
+          }
         }
       })
     }
@@ -126,9 +121,6 @@ export default {
 </script>
 
 <style lang="scss">
-/* 修复input 背景不协调 和光标变色 */
-/* Detail see https://github.com/PanJiaChen/vue-element-admin/pull/927 */
-
 $bg:#283443;
 $light_gray:#fff;
 $cursor: #fff;
@@ -180,7 +172,10 @@ $light_gray:#eee;
 .login-container {
   min-height: 100%;
   width: 100%;
-  background-color: $bg;
+  background-image: url('~@/assets/common/login.jpeg');
+  background-size: 100% 100%; // 图片位置
+  background-repeat: no-repeat; // 不重叠
+  background-position: center; // 将图片位置设置为充满整个屏幕
   overflow: hidden;
 
   .login-form {

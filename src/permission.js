@@ -24,6 +24,7 @@ router.beforeEach(async(to, from, next) => {
   } else {
     // 没有token
     // 判断去的是不是白名单(不被权限控制的页面)
+    // whiteList.indexOf(to.path) > -1 = true
     if (whiteList.indexOf(to.path) > -1) {
       // 去的地方在白名单
       next()

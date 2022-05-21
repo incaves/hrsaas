@@ -12,7 +12,7 @@ const actions = {
   // 获取用户信息
   async getUserInfo({ commit }) {
     const result = await getUserInfo() // 获取用户信息
-    const baseInfo = await getUserDetailById(result.userId) // 获取头像(需要传递用户id用的其他接口)
+    const baseInfo = await getUserDetailById(result.userId) // 获取头像(需要传递用户id,用的其他接口)
     const baseResult = { ...result, ...baseInfo } // 把两个合并在一起
     commit('SETUSERINFO', baseResult)
     return result // 这个返回值权限控制会用到(这里只用到result的数据)

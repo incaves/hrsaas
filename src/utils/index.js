@@ -115,3 +115,27 @@ export function param2Obj(url) {
   })
   return obj
 }
+/**
+ * 将列表型的数据转换成树形数据
+ * 子节点的id = 根节点的pid一样
+ * 递归(自己调用自己 但是循环的条件一定要不一样) 否则就会死循环
+ * list是数组
+ * 首先找一个头 树形结构从根开始找(发现所有的根都有一个共同的特点,它的pid为 " " 空字符串)
+ * rootValue 默认第一次为空字符串
+ */
+export function tranListToTreeData(list, rootValue) {
+  var arr = []
+  list.forEach(item => {
+    if (item.pid === rootValue) {
+      // 找到了之后就要item下面有没有节点
+      // id === pid
+      const children = tranListToTreeData(list, item.id)
+      if (children.length) {
+        // 如果 childern 长度大于0 说明找到了子节点
+        item.children = children
+      }
+      arr.push(item) // 将内容加入到数组中
+    }
+  })
+  return arr
+}
